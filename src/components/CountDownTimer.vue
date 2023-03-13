@@ -116,6 +116,6 @@ export default {
 }
 .svg {
   /* Flips the svg and makes the animation to move left-to-right */
-  transform: scaleX(-1);
+  transform: scaleX(1);
 }
 </style>

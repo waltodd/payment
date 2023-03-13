@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
+import i18n from './i18n'
 import App from './App.vue'
 
 
-createApp(App).mount('#app')
+i18n(createApp(App)).mount('#app')
 
