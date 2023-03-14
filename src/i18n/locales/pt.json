@@ -1,0 +1,12 @@
+{
+  "title": "Wiza Pagamentos",
+  "description": "Métodos de pagamento",
+  "next": "Seguinte",
+  "send": "Enviar",
+  "cancel": "Cancelar",
+  "otpTitle": "Verificação OTP",
+  "otpDescription": "Digite o OTP enviado para",
+  "warning": "Não atualize esta página enquanto aguarda a confirmação do pagamento",
+  "waiting": "Aguardando autorização",
+  "purchaseMsn": "Compra realizada com sucesso"
+}

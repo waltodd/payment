@@ -9,7 +9,7 @@
         <div class="form1" id="step1" v-if="currentStep === 1">
           <div>
             <div class="header">
-              <h3>Wiza Payments</h3>
+              <h3>{{ $t("title") }}</h3>
               <div>
                 <h5>{{ nameMerchant }}</h5>
               </div>
@@ -19,7 +19,7 @@
               </div>
             </div>
             <div class="payment-methods">
-              <h5>Payment methods</h5>
+              <h5>{{ $t("description") }}</h5>
               <div class="payment-methods-container">
                 <div
                   class="payment-methods-card"
@@ -28,26 +28,28 @@
                 >
                   <!-- <img src="./assets/guita.png" alt="" /> -->
                   <p>{{ met.processor }}</p>
-                  <div
+                  <!-- <div
                     class="checkbox-container"
                     :style="{ opacity: isChecked && index === 0 ? '1' : '.4' }"
                     @click="selectOnlyThis(met, index)"
                   >
                     <img src="./assets/check.svg" />
-                  </div>
+                  </div> -->
+                  <input type="radio" id="contactChoice2" name="contact" value="phone" />
+
                 </div>
               </div>
             </div>
           </div>
-          <div class="footer" @click="goForward()">
-            <div class="btn">Next</div>
+          <div class="footer" @click="goForward()" >
+            <div class="btn">{{ $t("next") }}</div>
           </div>
         </div>
         <!--STEP ONE-->
         <!--STEP TWO-->
         <div class="form2" id="step2" v-if="currentStep === 2">
           <div class="header">
-            <h3>Wiza Payments</h3>
+            <h3>{{ $t("title") }}</h3>
             <h5>{{ nameMerchant }}</h5>
             <p class="amount">{{ transactionAmount }} AOA</p>
             <span>{{ transactionRefrenceId }}</span>
@@ -56,72 +58,101 @@
             <div class="input-container">
               <img src="./assets/guita.png" alt="" />
               <p class="amount">{{ transactionAmount }} AOA</p>
-              <input
+              <input v-if="!authloader"
                 class="input"
                 type="text"
                 v-model.number="cellphone"
                 placeholder="+244 222 129 045"
               />
+              <span v-else class="loader-btn"></span>
             </div>
           </div>
           <div class="footer3" @click="authorization">
-            <div class="btn3">Next </div>
+            <div class="btn3">{{ $t("next") }}</div>
           </div>
         </div>
         <!--STEP TWO-->
         <!--STEP THREE-->
         <div class="form3" id="step3" v-if="currentStep === 3">
           <div class="header">
-            <h3>Wiza Payments</h3>
+            <h3>{{ $t("title") }}</h3>
             <h5>{{ nameMerchant }}</h5>
-            <p>{{transactionAmount}} AOA</p>
-            <span>{{transactionRefrenceId}}</span>
+            <p class="amount">{{ transactionAmount }} AOA</p>
+            <span>{{ transactionRefrenceId }}</span>
           </div>
           <div class="opt-container">
             <div class="input-container">
               <img src="./assets/guita.png" alt="" />
-              <h4>OPT veririfcation</h4>
+              <h4>{{ $t("otpTitle") }}</h4>
               <span>
-                Enter the OTP sent to
+                {{ $t("otpDescription") }}
                 <strong>{{ cellphone }}</strong>
               </span>
-              <p><strong>01:25</strong></p>
+              <OtpTimer :elapsed="timeElapsed" :limit="timeLimit" />
               <div class="opt-container">
-                <OPT />
+                <VOtpInput
+                  v-if="!otpSent"
+                  v-model="otp"
+                  :value="otp"
+                  ref="otpInput"
+                  input-classes="otp-input"
+                  :num-inputs="6"
+                  :should-auto-focus="true"
+                  separator=" "
+                  :is-input-num="true"
+                  :conditionalClass="[
+                    'one',
+                    'two',
+                    'three',
+                    'four',
+                    'fifh',
+                    'six',
+                  ]"
+                  :placeholder="['*', '*', '*', '*', '*', '*']"
+                  @on-change="handleOnChange"
+                  @on-complete="handleOnComplete"
+                />
+
+                <span v-else class="loader-btn"></span>
               </div>
             </div>
           </div>
-          <div class="footer">
-            <div class="btn-cancel">Cancel</div>
+          <div class="footer" v-if="!otpSent">
+            <div class="btn" @click="sendOtp">{{ $t("send") }}</div>
+          </div>
+         
+          <div class="footer" v-else>
+            <div class="btn-cancel">{{ $t("cancel") }}</div>
           </div>
         </div>
         <!--STEP THREE-->
         <!--STEP FOUR-->
         <div class="form4" id="step3" v-if="currentStep === 4">
           <div class="header">
-            <h3>Wiza Payments</h3>
-            <h5>Ngueve Comercial</h5>
-            <p class="amount">10.220,25 AOA</p>
-            <span>234342</span>
+            <h3>{{ $t("title") }}</h3>
+            <h5>{{ nameMerchant }}</h5>
+            <p class="amount">{{ transactionAmount }} AOA</p>
+            <span>{{ transactionRefrenceId }}</span>
           </div>
           <div class="countdown-container">
             <p class="warning">
-              Do not refresh this page while waiting for payment confirmation
+              {{ $t("warning") }}
             </p>
             <CountDownTimer :elapsed="timeElapsed" :limit="timeLimit" />
 
             <div class="footer-countdown">
-              <p class="description">Waiting authorization</p>
-              <p class="amount">10.220,25 AOA</p>
+              <p class="description">{{ $t("waiting") }}</p>
+              <p class="amount">{{ transactionAmount }} AOA</p>
             </div>
           </div>
         </div>
         <!--STEP FOUR-->
         <!--SUCCED-->
         <div class="complete" v-if="currentStep === 5">
-          <h3>Wiza Payments</h3>
+          <h3>{{ $t("title") }}</h3>
           <img src="./assets/complete.svg" alt="complete" />
-          <p>Purchase made successfully</p>
+          <span class="success-p">{{ transactionRefrenceId }}</span>
+          <p>{{ $t("purchaseMsn") }}</p>
         </div>
         <!--SUCCED-->
       </div>
@@ -130,13 +161,16 @@
 </template>
 
 <script>
-import OPT from "../src/components/OTP.vue";
 import CountDownTimer from "../src/components/CountDownTimer.vue";
+import OtpTimer from "../src/components/OtpTimer.vue";
+import VOtpInput from "vue3-otp-input";
+
 
 export default {
   name: "App",
   components: {
-    OPT,
+    OtpTimer,
+    VOtpInput,
     CountDownTimer,
   },
   data() {
@@ -145,7 +179,7 @@ export default {
       currentStep: 1,
       timeElapsed: 0,
       timerInterval: undefined,
-      timeLimit: 10,
+      timeLimit: 240,
       isChecked: false,
       transactionAmount: "",
       transactionRefrenceId: "",
@@ -156,12 +190,18 @@ export default {
       serviceMethod: "",
       proccessorMethod: "",
       locationAuthorization: "",
+      locationConfirmation: "",
       parentID: "",
-
+      otpCode: "",
+      otp: "",
+      otpSent: false,
+      authloader: false,
+      desabledButton:true
     };
   },
 
   methods: {
+    
     selectOnlyThis(item, index) {
       if (index === 0) {
         this.isChecked = !this.isChecked;
@@ -172,6 +212,7 @@ export default {
       this.proccessorMethod = processor;
     },
     goForward() {
+
       this.currentStep += 1;
     },
 
@@ -181,7 +222,7 @@ export default {
       if (this.cellphone.length > 0) {
         alert("Field requited");
       }
-
+      this.authloader = true;
       const response = await fetch(
         "https://api.wiza.ao/v1/hosts/transactions",
         {
@@ -205,11 +246,9 @@ export default {
       // const data = await response.json();
       const location = await response.headers.get("Location");
 
+      this.locationAuthorization = location;
 
-
-      this.locationAuthorization = location
-
-      console.log(this.locationAuthorization);
+      // console.log(this.locationAuthorization);
 
       const res = await fetch(
         `https://api.wiza.ao/${this.locationAuthorization}`,
@@ -218,7 +257,7 @@ export default {
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-          }
+          },
         }
       );
       if (!response.ok) {
@@ -227,12 +266,87 @@ export default {
       // const data = await response.json();
       const data = await res.json();
 
-      const {id} = data
+      const { id } = data;
       this.parentID = id;
-      console.log(id)
+      // console.log(id);
 
-      this.currentStep +=1;
-      
+      this.currentStep += 1;
+    },
+    async sendOtp() {
+      if (this.otp.length > 0) {
+        alert("Field requited");
+      }
+
+      const optValue = this.$refs.otpInput.otp.join('')
+      this.otpCode = optValue;
+      console.log(this.otpCode);
+
+      this.otpSent = true;
+      const response = await fetch(
+        "https://api.wiza.ao/v1/hosts/transactions",
+        {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: this.transactionId,
+            type: "confirmation",
+            service: this.serviceMethod,
+            processor: this.proccessorMethod,
+            otp: this.otpCode,
+            parent_transaction_id: this.parentID,
+          }),
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      // const data = await response.json();
+      const locationConfirm = await response.headers.get("Location");
+
+      console.log(locationConfirm);
+      this.locationConfirmation = locationConfirm;
+
+      this.currentStep += 1;
+      const res = await fetch(
+        `https://api.wiza.ao/${this.locationConfirmation}`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      // const data = await response.json();
+
+      const resultDATA = await res.json();
+      console.log(resultDATA);
+
+      const resp = await fetch(
+        `https://api.wiza.ao/v1/hosts/jungleworks/${this.transactionId}/complete`,
+        {
+          method: "PATCH",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${resp.status}`);
+      }
+      // const data = await response.json();
+
+      const finalResult = await resp.json();
+      console.log(finalResult);
+
+      this.currentStep += 1;
     },
     startTimer() {
       this.timerInterval = setInterval(() => {
@@ -245,7 +359,7 @@ export default {
   },
   mounted() {
     fetch(
-      "https://api.wiza.ao/v1/hosts/payment-methods?id=31a7e9dd-75ac-4cc4-bb98-3538325cae5a&nonce=efa6925f97360669dfc6a50003a6456f0254a9e07c1abae079dbae888fe39ec2",
+      "https://api.wiza.ao/v1/hosts/payment-methods?id=73047cf6-2c1b-4ac1-b4fe-4cf69b2f1a36&nonce=6dc5f80bcd7b5ab0eb055f7a5d52a493e7e466f7045e9541906a9d96370cb911",
       {
         method: "GET",
         headers: {
@@ -355,7 +469,7 @@ body {
 .loader-btn {
   width: 20px;
   height: 20px;
-  border: 3px solid #fff;
+  border: 3px solid #000;
   border-bottom-color: transparent;
   border-radius: 50%;
   display: inline-block;
@@ -500,7 +614,7 @@ STEP TWO
   width: 6rem;
 }
 .input {
-  width: 70%;
+  width: 60%;
   font-size: 1.2rem;
   line-height: 12px;
   background: #f5f5f5;
@@ -532,7 +646,6 @@ STEP TWO
   background-color: #000;
   cursor: pointer;
   align-items: center;
-
 }
 
 /**
@@ -653,5 +766,26 @@ STEP FOUR*/
   width: 0.8rem;
   height: 0.8rem;
   fill: #fff;
+}
+
+/**
+OTP
+*/
+
+.otp-input {
+  padding: 1rem;
+  width: 1rem;
+  text-align: center;
+  background-color: #f5f5f5;
+  border: 0;
+  border-bottom: 1px solid #ddd;
+  font-size: 1.1rem;
+  margin: 0rem 0.2rem;
+}
+.otp-input:focus {
+  outline: none;
+}
+.success-p{
+  padding: .5rem 0;
 }
 </style>
