@@ -7,7 +7,7 @@
       <div class="main">
         <!--STEP ONE-->
         <div class="form1" id="step1" v-if="currentStep === 1">
-          <div>
+        
             <div class="header">
               <h3>{{ $t("title") }}</h3>
               <div>
@@ -27,21 +27,29 @@
                   :key="index"
                 >
                   <!-- <img src="./assets/guita.png" alt="" /> -->
-                  <p>{{ met.processor }}</p>
-                  <!-- <div
+                  <!-- <p>{{ met.processor }}</p>
+                  <div
                     class="checkbox-container"
-                    :style="{ opacity: isChecked && index === 0 ? '1' : '.4' }"
-                    @click="selectOnlyThis(met, index)"
                   >
-                    <img src="./assets/check.svg" />
-                  </div> -->
-                  <input type="radio" id="contactChoice2" name="contact" value="phone" />
-
+                    <input @click="selectOnlyThis(met, index)" class="radio-input" type="radio" v-model="selectMet" :value="index" /> -->
+                  <div class="radio-toolbar">
+                    <input
+                      @click="selectOnlyThis(met, index)"
+                      type="radio"
+                      :id="index"
+                      name="radioFruit"
+                      :value="index"
+                    />
+                    <label :for="index">{{ met.processor }}</label>
+                    <div class="custom-checkbox" >
+                       <img src="./assets/check.svg" alt="" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div class="footer" @click="goForward()" >
+         
+          <div class="footer" @click="goForward()">
             <div class="btn">{{ $t("next") }}</div>
           </div>
         </div>
@@ -58,7 +66,8 @@
             <div class="input-container">
               <img src="./assets/guita.png" alt="" />
               <p class="amount">{{ transactionAmount }} AOA</p>
-              <input v-if="!authloader"
+              <input
+                v-if="!authloader"
                 class="input"
                 type="text"
                 v-model.number="cellphone"
@@ -120,7 +129,7 @@
           <div class="footer" v-if="!otpSent">
             <div class="btn" @click="sendOtp">{{ $t("send") }}</div>
           </div>
-         
+
           <div class="footer" v-else>
             <div class="btn-cancel">{{ $t("cancel") }}</div>
           </div>
@@ -165,7 +174,6 @@ import CountDownTimer from "../src/components/CountDownTimer.vue";
 import OtpTimer from "../src/components/OtpTimer.vue";
 import VOtpInput from "vue3-otp-input";
 
-
 export default {
   name: "App",
   components: {
@@ -196,24 +204,28 @@ export default {
       otp: "",
       otpSent: false,
       authloader: false,
-      desabledButton:true
+      selectMet: false,
     };
   },
 
   methods: {
-    
-    selectOnlyThis(item, index) {
-      if (index === 0) {
-        this.isChecked = !this.isChecked;
+    selectOnlyThis(item) {
+      if (!item) {
+        alert("select method");
       }
-
+      console.log(item);
       const { service, processor } = item;
       this.serviceMethod = service;
       this.proccessorMethod = processor;
     },
     goForward() {
-
-      this.currentStep += 1;
+      if (this.proccessorMethod === "") {
+        alert("Select a method");
+      } else {
+        this.currentStep += 1;
+        // console.log("Passed");
+      }
+      // console.log("Passed");
     },
 
     //POST AUTHORIZATION
@@ -223,61 +235,94 @@ export default {
         alert("Field requited");
       }
       this.authloader = true;
-      const response = await fetch(
-        "https://api.wiza.ao/v1/hosts/transactions",
-        {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: this.transactionId,
-            type: "authorization",
-            service: this.serviceMethod,
-            processor: this.proccessorMethod,
-            customer: this.cellphone,
-          }),
+
+      if (this.proccessorMethod === "guita") {
+        const response = await fetch(
+          "https://api.wiza.ao/v1/hosts/transactions",
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: this.transactionId,
+              type: "authorization",
+              service: this.serviceMethod,
+              processor: this.proccessorMethod,
+              customer: this.cellphone,
+            }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      // const data = await response.json();
-      const location = await response.headers.get("Location");
+        // const data = await response.json();
+        const location = await response.headers.get("Location");
 
-      this.locationAuthorization = location;
+        this.locationAuthorization = location;
 
-      // console.log(this.locationAuthorization);
+        // console.log(this.locationAuthorization);
 
-      const res = await fetch(
-        `https://api.wiza.ao/${this.locationAuthorization}`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
+        const res = await fetch(
+          `https://api.wiza.ao/${this.locationAuthorization}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
         }
-      );
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
+        // const data = await response.json();
+        const data = await res.json();
+
+        const { id } = data;
+        this.parentID = id;
+        // console.log(id);
+
+        this.currentStep += 1;
+      } else {
+        alert("No need auth and confi.");
+        const response = await fetch(
+          "https://api.wiza.ao/v1/hosts/transactions",
+          {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              id: this.transactionId,
+              type: "paymnet",
+              service: this.serviceMethod,
+              processor: this.proccessorMethod,
+              amount: this.transactionAmount,
+              customer: this.cellphone,
+              currency: "aoa",
+            }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        // const data = await response.json();
+        const location = await response.headers.get("Location");
+
+        this.locationAuthorization = location;
+
+        console.log(this.locationAuthorization);
       }
-      // const data = await response.json();
-      const data = await res.json();
-
-      const { id } = data;
-      this.parentID = id;
-      // console.log(id);
-
-      this.currentStep += 1;
     },
     async sendOtp() {
       if (this.otp.length > 0) {
         alert("Field requited");
       }
 
-      const optValue = this.$refs.otpInput.otp.join('')
+      const optValue = this.$refs.otpInput.otp.join("");
       this.otpCode = optValue;
       console.log(this.otpCode);
 
@@ -359,7 +404,7 @@ export default {
   },
   mounted() {
     fetch(
-      "https://api.wiza.ao/v1/hosts/payment-methods?id=73047cf6-2c1b-4ac1-b4fe-4cf69b2f1a36&nonce=6dc5f80bcd7b5ab0eb055f7a5d52a493e7e466f7045e9541906a9d96370cb911",
+      "https://api.wiza.ao/v1/hosts/payment-methods?id=242a2a34-4ced-4c9f-b8f6-191ecf9f9788&nonce=77435ba2c917c6e701061d9e49de3ed965c8a5b45635de5eae9bb3a8abb3945a",
       {
         method: "GET",
         headers: {
@@ -459,7 +504,7 @@ body {
 .loader {
   width: 48px;
   height: 48px;
-  border: 3px solid #000;
+  border: 3px solid #282A3A;
   border-bottom-color: transparent;
   border-radius: 50%;
   display: inline-block;
@@ -469,7 +514,7 @@ body {
 .loader-btn {
   width: 20px;
   height: 20px;
-  border: 3px solid #000;
+  border: 3px solid #282A3A;
   border-bottom-color: transparent;
   border-radius: 50%;
   display: inline-block;
@@ -495,7 +540,7 @@ body {
 }
 .description {
   font-size: 1rem;
-  color: #212121;
+  color: #282A3A;
 }
 .warning {
   color: red;
@@ -516,6 +561,7 @@ STEP ONE
 **/
 
 .form1 {
+  border-radius: 4px;
   width: 25rem;
   background-color: #fff;
   display: flex;
@@ -524,16 +570,22 @@ STEP ONE
   align-items: center;
   text-align: center;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+
+  
 }
 .header {
   padding: 0.5rem 0;
 }
 .header span {
   font-size: 12px;
-  color: #000;
+  color: #282A3A;
 }
 .payment-methods {
   position: relative;
+  width:70%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .payment-methods h5 {
   text-align: left;
@@ -541,43 +593,91 @@ STEP ONE
 .payment-methods-container {
   display: grid;
   grid-template-columns: 1fr;
-  grid-gap: 0.5rem;
+  grid-gap: 1rem;
   justify-content: center;
   align-items: center;
+
 }
 
 .payment-methods-card {
   height: 6vh;
   width: 16rem;
-  background-color: #f5f5f5;
-  padding: 0.5rem;
   justify-content: space-between;
   align-items: center;
   display: flex;
+  cursor: pointer;
 }
-.payment-methods-card img {
-  width: 8rem;
+
+.radio-toolbar {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  background-color: #f5f5f5;
+  justify-content: space-between;
 }
+
+.radio-toolbar input[type="radio"] {
+  opacity: 0;
+  position: fixed;
+  width: 0;
+
+}
+
+.radio-toolbar label {
+  display: inline-block;
+  text-align: left;
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  width: 13rem;
+  cursor: pointer;
+}
+
+
+.radio-toolbar input[type="radio"]:checked + label +div{
+  background-color: #282A3A; 
+  opacity: 1;
+}   
+.custom-checkbox{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  opacity: .4;
+  background-color: #282A3A;
+  margin-right: .5rem;
+}
+
+.custom-checkbox img{
+  width: 1rem;
+  height: 1rem;
+  padding: .5rem;
+}
+
 .footer {
+  height: 10vh;
   width: 100%;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 1rem 0;
+  padding-top:2rem;
 }
 .btn {
-  width: 70%;
-  padding: 1rem 0.5rem;
+  padding: .8rem 7.8rem;
   text-align: center;
   color: #fff;
-  background-color: #000;
+  background-color: #282A3A;
   cursor: pointer;
+  font-size: 16px;
 }
 /**
 STEP TWO
 */
 .form2 {
+  border-radius: 4px;
   width: 25rem;
   background-color: #fff;
   display: flex;
@@ -592,7 +692,7 @@ STEP TWO
 }
 .header span {
   font-size: 12px;
-  color: #000;
+  color: #282A3A;
 }
 .payment-methods {
   position: relative;
@@ -621,7 +721,7 @@ STEP TWO
   border: 2px solid #f5f5f5;
   padding: 0.8rem 0.5rem;
   text-align: left;
-  color: #000;
+  color: #282A3A;
   padding-left: 3rem;
 }
 .input:focus {
@@ -643,7 +743,7 @@ STEP TWO
   padding: 1rem 0.5rem;
   text-align: center;
   color: #fff;
-  background-color: #000;
+  background-color: #282A3A;
   cursor: pointer;
   align-items: center;
 }
@@ -660,13 +760,14 @@ STEP #3
   align-items: center;
   text-align: center;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+  border-radius: 4px;
 }
 .header {
   padding: 1rem 0;
 }
 .header span {
   font-size: 12px;
-  color: #000;
+  color: #282A3A;
 }
 .opt-container {
   padding: 0.5rem 0;
@@ -723,13 +824,14 @@ STEP FOUR*/
   align-items: center;
   text-align: center;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+  border-radius: 4px;
 }
 .header {
   padding: 1rem 0;
 }
 .header span {
   font-size: 12px;
-  color: #000;
+  color: #282A3A;
 }
 .footer-countdown {
   width: 100%;
@@ -758,16 +860,15 @@ STEP FOUR*/
   width: 1.5rem;
   height: 1.5rem;
   cursor: pointer;
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-  background-color: #212121;
-  border-radius: 50%;
 }
-.checkbox-container img {
-  width: 0.8rem;
-  height: 0.8rem;
-  fill: #fff;
-}
+input[type="radio"] {
+  height: 5rem;
+  width: 2rem;
+  background: #e8e8e8;
 
+  /* The outline will be the outer circle */
+  outline: none;
+}
 /**
 OTP
 */
@@ -785,7 +886,18 @@ OTP
 .otp-input:focus {
   outline: none;
 }
-.success-p{
-  padding: .5rem 0;
+.success-p {
+  padding: 0.5rem 0;
+}
+
+[type="radio"]:checked::before,
+[type="checkbox"]:checked::before {
+  content: "";
+  width: 2rem;
+  height: 2rem;
+  background-color: #282A3A;
+  position: absolute;
+  top: 2px;
+  left: 2px;
 }
 </style>
