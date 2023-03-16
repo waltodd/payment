@@ -1,8 +1,7 @@
 <template>
  
     <VOtpInput
-    
-        ref="otpInput"
+      ref="otpInput"
       input-classes="otp-input"
       :num-inputs="6"
       :should-auto-focus="true"

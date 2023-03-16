@@ -72,10 +72,13 @@ export default {
   align-items: center;
   flex-direction: column;
 }
+.cdt-container p{
+  font-size: 12px;
+}
 /* Sets the container's height and width */
 .root {
-  height: 10rem;
-  width: 10rem;
+  height: 5rem;
+  width: 5rem;
   position: relative;
   display: flex;
   justify-content: center;
@@ -94,12 +97,12 @@ export default {
 
 /* The SVG path that displays the timer's progress */
 .time-elapsed-path {
-  stroke-width: 4px;
+  stroke-width: 2px;
   stroke: #f5f5f5
 }
 .time-left-path {
   /* Same thickness as the original ring */
-  stroke-width: 4px;
+  stroke-width: 2px;
 
   /* Rounds the path endings  */
   stroke-linecap: round;

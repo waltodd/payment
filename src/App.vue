@@ -7,16 +7,11 @@
       <div class="main">
         <!--STEP ONE-->
         <div class="form1" id="step1" v-if="currentStep === 1">
-        
             <div class="header">
-              <h3>{{ $t("title") }}</h3>
-              <div>
+                <h3>{{ $t("title") }}</h3>
                 <h5>{{ nameMerchant }}</h5>
-              </div>
-              <div>
                 <p class="amount">{{ transactionAmount }} AOA</p>
                 <span>{{ transactionRefrenceId }}</span>
-              </div>
             </div>
             <div class="payment-methods">
               <h5>{{ $t("description") }}</h5>
@@ -26,12 +21,7 @@
                   v-for="(met, index) in paymentMethods"
                   :key="index"
                 >
-                  <!-- <img src="./assets/guita.png" alt="" /> -->
-                  <!-- <p>{{ met.processor }}</p>
-                  <div
-                    class="checkbox-container"
-                  >
-                    <input @click="selectOnlyThis(met, index)" class="radio-input" type="radio" v-model="selectMet" :value="index" /> -->
+                 
                   <div class="radio-toolbar">
                     <input
                       @click="selectOnlyThis(met, index)"
@@ -40,7 +30,8 @@
                       name="radioFruit"
                       :value="index"
                     />
-                    <label :for="index">{{ met.processor }}</label>
+                    <label :for="index" v-if="met.processor === 'guita'">Guita</label>
+                    <label :for="index" v-if="met.processor === 'unitel_money'">Unitel Money</label>
                     <div class="custom-checkbox" >
                        <img src="./assets/check.svg" alt="" />
                     </div>
@@ -49,9 +40,9 @@
               </div>
             </div>
          
-          <div class="footer" @click="goForward()">
-            <div class="btn">{{ $t("next") }}</div>
-          </div>
+            <div class="footer" @click="goForward()">
+              <div class="btn">{{ $t("next") }}</div>
+            </div>
         </div>
         <!--STEP ONE-->
         <!--STEP TWO-->
@@ -64,15 +55,17 @@
           </div>
           <div class="number">
             <div class="input-container">
-              <img src="./assets/guita.png" alt="" />
+              <img src="./assets/guitafull.jpg" alt="" />
               <p class="amount">{{ transactionAmount }} AOA</p>
               <input
                 v-if="!authloader"
                 class="input"
                 type="text"
-                v-model.number="cellphone"
-                placeholder="+244 222 129 045"
+                v-mask="['### ### ###']"
+                v-model.trim="cellphone"
+                placeholder="222 129 045"
               />
+
               <span v-else class="loader-btn"></span>
             </div>
           </div>
@@ -90,16 +83,14 @@
             <span>{{ transactionRefrenceId }}</span>
           </div>
           <div class="opt-container">
-            <div class="input-container">
-              <img src="./assets/guita.png" alt="" />
+              <img src="./assets/guitafull.jpg" alt="" />
               <h4>{{ $t("otpTitle") }}</h4>
               <span>
-                {{ $t("otpDescription") }}
+                {{ $t("otpDescription") }} 
                 <strong>{{ cellphone }}</strong>
               </span>
-              <OtpTimer :elapsed="timeElapsed" :limit="timeLimit" />
-              <div class="opt-container">
-                <VOtpInput
+              <OtpTimer id="timer" :elapsed="timeElapsed" :limit="timeLimit" />
+              <VOtpInput
                   v-if="!otpSent"
                   v-model="otp"
                   :value="otp"
@@ -118,25 +109,19 @@
                     'six',
                   ]"
                   :placeholder="['*', '*', '*', '*', '*', '*']"
-                  @on-change="handleOnChange"
-                  @on-complete="handleOnComplete"
+                
                 />
 
                 <span v-else class="loader-btn"></span>
-              </div>
-            </div>
           </div>
-          <div class="footer" v-if="!otpSent">
-            <div class="btn" @click="sendOtp">{{ $t("send") }}</div>
-          </div>
-
-          <div class="footer" v-else>
-            <div class="btn-cancel">{{ $t("cancel") }}</div>
+          <div class="footer" >
+            <div class="btn" @click="sendOtp" v-if="!otpSent">{{ $t("send") }}</div>
+            <div class="btn-cancel"  v-else>{{ $t("cancel") }}</div>
           </div>
         </div>
         <!--STEP THREE-->
         <!--STEP FOUR-->
-        <div class="form4" id="step3" v-if="currentStep === 4">
+        <div class="form4" id="step4" v-if="currentStep === 4">
           <div class="header">
             <h3>{{ $t("title") }}</h3>
             <h5>{{ nameMerchant }}</h5>
@@ -148,18 +133,17 @@
               {{ $t("warning") }}
             </p>
             <CountDownTimer :elapsed="timeElapsed" :limit="timeLimit" />
-
-            <div class="footer-countdown">
+          </div>
+          <div class="footer-countdown">
               <p class="description">{{ $t("waiting") }}</p>
               <p class="amount">{{ transactionAmount }} AOA</p>
             </div>
-          </div>
         </div>
         <!--STEP FOUR-->
         <!--SUCCED-->
         <div class="complete" v-if="currentStep === 5">
           <h3>{{ $t("title") }}</h3>
-          <img src="./assets/complete.svg" alt="complete" />
+          <img src="./assets/fail.png" alt="complete" />
           <span class="success-p">{{ transactionRefrenceId }}</span>
           <p>{{ $t("purchaseMsn") }}</p>
         </div>
@@ -173,9 +157,10 @@
 import CountDownTimer from "../src/components/CountDownTimer.vue";
 import OtpTimer from "../src/components/OtpTimer.vue";
 import VOtpInput from "vue3-otp-input";
-
+import {mask} from 'vue-the-mask'
 export default {
   name: "App",
+  directives: {mask},
   components: {
     OtpTimer,
     VOtpInput,
@@ -231,10 +216,14 @@ export default {
     //POST AUTHORIZATION
 
     async authorization() {
-      if (this.cellphone.length > 0) {
+      if (!this.cellphone) {
         alert("Field requited");
       }
       this.authloader = true;
+
+      this.cellphone = this.cellphone.replace(/\s/g, '');
+
+      console.log(this.cellphone)
 
       if (this.proccessorMethod === "guita") {
         const response = await fetch(
@@ -284,7 +273,7 @@ export default {
         this.parentID = id;
         // console.log(id);
 
-        this.currentStep += 1;
+         this.currentStep += 1;
       } else {
         alert("No need auth and confi.");
         const response = await fetch(
@@ -404,7 +393,7 @@ export default {
   },
   mounted() {
     fetch(
-      "https://api.wiza.ao/v1/hosts/payment-methods?id=242a2a34-4ced-4c9f-b8f6-191ecf9f9788&nonce=77435ba2c917c6e701061d9e49de3ed965c8a5b45635de5eae9bb3a8abb3945a",
+      "https://api.wiza.ao/v1/hosts/payment-methods?id=49b82bb5-66cd-45dd-95f3-383e2d6e0e45&nonce=299f64598358bc6ba485016e6d527d1bc9fe148ebadc5250de7277c165c50382",
       {
         method: "GET",
         headers: {
@@ -531,19 +520,19 @@ body {
 }
 .container {
   width: 90%;
-  max-width: 400px;
+  max-width: 350px;
   margin: auto;
 }
 .amount {
-  font-weight: bold;
-  font-size: 1.1rem;
+  font-weight: 500;
+  font-size: 1rem;
 }
 .description {
   font-size: 1rem;
   color: #282A3A;
 }
 .warning {
-  color: red;
+  color: #e30000;
   font-size: 0.8rem;
   padding: 0rem 0.5rem;
 }
@@ -563,49 +552,62 @@ STEP ONE
 .form1 {
   border-radius: 4px;
   width: 25rem;
+  height: 23rem;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: .5fr 2fr .5fr;
   justify-content: center;
   align-items: center;
   text-align: center;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
-
-  
 }
 .header {
   padding: 0.5rem 0;
 }
+.header p{ 
+  margin:0;
+}
+.header h3{ 
+  margin:.5rem;
+}
+.header h5{ 
+  margin:.2rem;
+}
 .header span {
   font-size: 12px;
   color: #282A3A;
+  margin:0;
 }
 .payment-methods {
   position: relative;
-  width:70%;
+  width:100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
 }
 .payment-methods h5 {
   text-align: left;
+  padding-right: 3rem;
+  margin: .5rem 0;
 }
 .payment-methods-container {
+  width: 70%;
   display: grid;
   grid-template-columns: 1fr;
-  grid-gap: 1rem;
+  grid-gap: .5rem;
   justify-content: center;
   align-items: center;
 
 }
 
 .payment-methods-card {
-  height: 6vh;
-  width: 16rem;
+  width: 90%;
   justify-content: space-between;
   align-items: center;
   display: flex;
   cursor: pointer;
+
 }
 
 .radio-toolbar {
@@ -629,66 +631,70 @@ STEP ONE
   padding: 12px 20px;
   font-size: 16px;
   border-radius: 4px;
-  width: 13rem;
+  height: 2vh;
+  width: 8rem;
   cursor: pointer;
 }
 
 
 .radio-toolbar input[type="radio"]:checked + label +div{
-  background-color: #282A3A; 
+  background-color: #28c937; 
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
   opacity: 1;
 }   
 .custom-checkbox{
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.7rem;
+  height: 1.7rem;
   border-radius: 50%;
   opacity: .4;
   background-color: #282A3A;
-  margin-right: .5rem;
+  margin-right: 1rem;
 }
 
 .custom-checkbox img{
-  width: 1rem;
-  height: 1rem;
+  width: .8rem;
+  height: .8rem;
   padding: .5rem;
 }
 
 .footer {
-  height: 10vh;
   width: 100%;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding-top:2rem;
+  padding-top:.5rem;
 }
 .btn {
-  padding: .8rem 7.8rem;
+  padding: .8rem 3rem;
   text-align: center;
+  border-radius: 4px;
   color: #fff;
   background-color: #282A3A;
   cursor: pointer;
   font-size: 16px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 /**
 STEP TWO
 */
 .form2 {
   border-radius: 4px;
-  width: 25rem;
+  height: 23rem;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: .5fr 1.5fr .8fr;
   justify-content: center;
   align-items: center;
   text-align: center;
+  width: 25rem;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 .header {
-  padding: 1rem 0;
+  padding: .5rem 0;
 }
 .header span {
   font-size: 12px;
@@ -708,27 +714,40 @@ STEP TWO
   grid-gap: 0.5rem;
   justify-content: center;
   align-items: center;
-  flex-direction: column;
 }
 .input-container img {
-  width: 6rem;
+  width: 7rem;
+  margin: 0;
+}
+
+.input-container p {
+  text-align: center;
+  margin: .2rem 0;
+}
+
+.input-container .input {
+  margin: .2rem 0;
 }
 .input {
-  width: 60%;
+  width: 70%;
   font-size: 1.2rem;
   line-height: 12px;
+  border: none;
   background: #f5f5f5;
-  border: 2px solid #f5f5f5;
-  padding: 0.8rem 0.5rem;
+  padding: 0.5rem 0.5rem;
   text-align: left;
   color: #282A3A;
-  padding-left: 3rem;
+  padding-left: 1rem;
+  border-radius: 5px;
+  box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px;
+
 }
 .input:focus {
   outline: none;
 }
 .input::placeholder {
   color: #212121;
+  width: 60%;
 }
 .footer3 {
   width: 100%;
@@ -736,16 +755,17 @@ STEP TWO
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 1rem 0;
+  margin: 0rem 0;
 }
 .btn3 {
-  width: 70%;
-  padding: 1rem 0.5rem;
+  padding: .8rem 3rem;
   text-align: center;
+  border-radius: 4px;
   color: #fff;
   background-color: #282A3A;
   cursor: pointer;
-  align-items: center;
+  font-size: 16px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
 /**
@@ -753,9 +773,12 @@ STEP #3
 */
 .form3 {
   width: 25rem;
+  height: 23rem;
+  position: relative;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-gap: 0rem;
+  grid-template-rows: 1fr 1.5fr .5fr;
   justify-content: center;
   align-items: center;
   text-align: center;
@@ -763,52 +786,68 @@ STEP #3
   border-radius: 4px;
 }
 .header {
-  padding: 1rem 0;
+  padding: .3rem 0;
+  margin: -1rem 0;
 }
 .header span {
   font-size: 12px;
   color: #282A3A;
+  margin: 0;
+}
+.header p {
+  margin: 0;
 }
 .opt-container {
-  padding: 0.5rem 0;
+  padding: 0rem 0;
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-gap: 0.5rem;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-.opt {
-  display: flex;
-  flex-direction: column;
-  justify-items: center;
-  align-items: center;
-  text-align: center;
-}
-.opt-container {
-  width: 100%;
-  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-direction: column;
+  margin: 0;
 }
-
+.opt-container img{
+  width: 7rem;
+  margin: 0;
+}
+.opt-container h4{
+  margin: 0;
+  font-weight: 500;
+  font-size: 14px;
+}
+.opt-container span{
+  margin: 0;
+  font-size: 13px;
+}
+.opt-container #timer{
+  margin: .2rem;
+  height: 1rem;
+  font-size: 12px;
+  font-weight: 300;
+}
+.otp-input{
+  width: 1rem;
+  height: .6rem;
+}
 .footer {
   width: 100%;
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 1rem 0;
+  margin-bottom: .8rem;
 }
 .btn-cancel {
-  width: 70%;
-  padding: 1rem 0.5rem;
-  text-align: center;
-  color: red;
+
+  color: #e30000;
   cursor: pointer;
-  border: 1px solid red;
+  border: 1px solid #e30000;
+  padding: .8rem 3rem;
+  text-align: center;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
 /**
@@ -817,9 +856,12 @@ STEP FOUR*/
 
 .form4 {
   width: 25rem;
+  height: 23rem;
+  position: relative;
   background-color: #fff;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-gap: 0rem;
+  grid-template-rows: 1fr 1.5fr .5fr;
   justify-content: center;
   align-items: center;
   text-align: center;
@@ -827,19 +869,27 @@ STEP FOUR*/
   border-radius: 4px;
 }
 .header {
-  padding: 1rem 0;
+  padding: 1rem 0; 
+  margin: 0;
 }
 .header span {
   font-size: 12px;
   color: #282A3A;
 }
+.countdown-container p{
+  margin: 0;
+}
 .footer-countdown {
   width: 100%;
   padding-bottom: 2rem;
 }
+.footer-countdown p{
+  margin: .2rem;
+}
 .complete {
   padding: 2rem 0;
   width: 25rem;
+  height: 15rem;
   background-color: #fff;
   display: flex;
   flex-direction: column;
